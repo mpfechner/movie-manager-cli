@@ -165,6 +165,16 @@ def update_movie(title: str, year: int, rating: float, poster_url: str, user_id:
         return False
 
 
+def get_user_movies(user_id: int) -> list:
+    """Return all movies for a specific user."""
+    with engine.connect() as connection:
+        result = connection.execute(
+            text("SELECT * FROM movies WHERE user_id = :user_id"),
+            {"user_id": user_id}
+        )
+        return result.fetchall()
+
+
 if __name__ == "__main__":
     uid = get_user_id("Sara")
     if uid:

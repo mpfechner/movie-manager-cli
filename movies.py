@@ -149,28 +149,27 @@ def command_update_movie():
     present_menu()
 
 
-def show_stats() -> None:
-    """ Function to show statistics like average, median, best and worst movie """
-    movies = movie_storage.get_movies()
-    if len(movies) > 0:
-        try:
-            average_rating = round(sum(movie["rating"] for movie in movies.values()) / len(movies), 2)
-            median_rating = round(statistics.median(movie["rating"] for movie in movies.values()), 2)
-            best_rated_movie = max(movies, key=lambda title: movies[title]["rating"])
-            worst_rated_movie = min(movies, key=lambda title: movies[title]["rating"])
+def command_show_stats():
+    """Show statistics about the user's movie collection."""
+    movies = storage.get_user_movies(current_user_id)
+    if not movies:
+        print("❌ No movies found.")
+        return
 
-            print(f"\033[34mAverage rating: {average_rating}\033[0m")
-            print(f"\033[34mMedian rating: {median_rating}\033[0m")
-            print(f"\033[34mBest movie: {best_rated_movie}, Rating: {movies[best_rated_movie]['rating']}\033[0m")
-            print(f"\033[34mWorst movie: {worst_rated_movie}, Rating: {movies[worst_rated_movie]['rating']}\033[0m")
-        except (KeyError, ValueError, TypeError) as error:
-            print(f"\033[31mError calculating statistics: {str(error)}\033[0m")
-    else:
-        print("\033[31mNo more movies in Database\033[0m")
+    total = len(movies)
+    average = round(sum(m.rating for m in movies) / total, 2)
+    best = max(movies, key=lambda m: m.rating)
+    worst = min(movies, key=lambda m: m.rating)
 
-    print("\033[0m")
-    input("\033[34mPress enter to continue\033[0m")
+    print("\n📊 Your Movie Stats:")
+    print(f"🎬 Total movies: {total}")
+    print(f"⭐ Average rating: {average}")
+    print(f"🏆 Best movie: {best.title} ({best.rating})")
+    print(f"🐌 Worst movie: {worst.title} ({worst.rating})\n")
+
+    input("🔙 Press Enter to return to the menu...")
     present_menu()
+
 
 
 def random_movie() -> None:
@@ -314,7 +313,7 @@ def present_menu() -> None:
         2: command_add_movie,
         3: command_delete_movie,
         4: command_update_movie,
-        # 5: command_show_stats,
+        5: command_show_stats,
         # 6: command_random_movie,
         # 7: command_search_movie,
         # 8: command_sort_movies_by_rating,
