@@ -2,7 +2,8 @@ import statistics  # For statistics functions
 import random  # For random movie selection
 import sys
 from fuzzywuzzy import process  # For fuzzy matching in movie search
-import movie_storage
+from storage import movie_storage_sql as storage
+
 
 
 def list_movies() -> None:
