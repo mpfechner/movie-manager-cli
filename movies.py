@@ -227,30 +227,41 @@ def filter_movies() -> None:
     present_menu()
 
 
-def search_movie() -> None:
-    """ Function to search for movies by part of the name """
-    movies = movie_storage.get_movies()
-    needle = input("\033[34mEnter part of movie name: \33[0m").lower().strip()
-
-    if not needle:
-        print("\033[31mYou must enter a search term!\033[0m")
-        input("\033[34mPress enter to continue\033[0m")
-        present_menu()
+def command_search_movie():
+    """Search for a movie title using fuzzy matching."""
+    movies = storage.get_user_movies(current_user_id)
+    if not movies:
+        print("❌ No movies found.")
         return
 
-    matches = process.extract(needle, movies.keys(), limit=None)
-    matches = [match for match in matches if match[1] >= 60]
+    query = input("🔍 Enter part of a movie title to search: ").strip()
+    if not query:
+        print("⚠️ Search query cannot be empty.")
+        return
 
-    if matches:
-        for match in matches:
-            movie_title = match[0]
-            movie_data = movies[movie_title]
-            print(f"\033[34m{movie_title}: Rating: {movie_data['rating']} Year: {movie_data['year']}\033[0m")
-    else:
-        print("\033[31mNo close matches found\033[0m")
+    movie_titles = [m.title for m in movies]
+    matches = process.extract(query, movie_titles, limit=5, score_cutoff=60)
 
-    print("\033[0m")
-    input("\033[34mPress enter to continue\033[0m")
+    if not matches:
+        print("❌ No matching titles found.")
+        return
+
+    found_any = False
+
+    print("\n🔎 Search results:")
+    for title, score, _ in matches:
+        movie = next((m for m in movies if m.title == title), None)
+        if not movie:
+            continue  # Failsafe fallback
+
+        print(f"🎬 {movie.title} ({movie.year}) - Rating: {movie.rating}")
+        print(f"🖼️ {movie.poster_url}\n")
+        found_any = True
+
+    if not found_any:
+        print("❌ No valid movie details found for the matches.")
+
+    input("🔙 Press Enter to return to the menu...")
     present_menu()
 
 
@@ -315,7 +326,7 @@ def present_menu() -> None:
         4: command_update_movie,
         5: command_show_stats,
         6: command_random_movie,
-        # 7: command_search_movie,
+        7: command_search_movie,
         # 8: command_sort_movies_by_rating,
         # 9: command_sort_movies_by_year,
         # 10: command_filter_movies
