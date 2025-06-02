@@ -185,6 +185,15 @@ def get_movies_sorted_by_rating(user_id: int) -> list:
         return result.fetchall()
 
 
+def get_movies_sorted_by_year(user_id: int) -> list:
+    """Return all movies sorted by year (ascending) for the given user."""
+    with engine.connect() as connection:
+        result = connection.execute(
+            text("SELECT * FROM movies WHERE user_id = :user_id ORDER BY year ASC"),
+            {"user_id": user_id}
+        )
+        return result.fetchall()
+
 
 if __name__ == "__main__":
     uid = get_user_id("Sara")
