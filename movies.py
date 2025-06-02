@@ -95,7 +95,7 @@ def command_delete_movie():
     storage.delete_movie(best_match, current_user_id)
 
 
-1
+
 def command_update_movie():
     """Update rating, year, or poster of a movie for the current user."""
     movies = storage.list_movies(current_user_id)
@@ -172,21 +172,21 @@ def command_show_stats():
 
 
 
-def random_movie() -> None:
-    """ Function to select a random movie from the list """
-    movies = movie_storage.get_movies()
-    if movies:
-        random_movie_name = random.choice(list(movies))
-        try:
-            movie_rating = movies[random_movie_name]["rating"]
-            print(f"\033[34mYour movie for tonight: {random_movie_name}, it's rated {movie_rating}\033[0m")
-        except (KeyError, ValueError, TypeError) as error:
-            print(f"\033[31mError retrieving movie rating: {str(error)}\033[0m")
-    else:
-        print("\033[31mNo more movies in Database\033[0m")
+def command_random_movie():
+    """Display a random movie from the user's collection."""
+    movies = storage.get_user_movies(current_user_id)
+    if not movies:
+        print("❌ No movies found.")
+        return
 
-    print("\033[0m")
-    input("\033[34mPress enter to continue\033[0m")
+    movie = random.choice(movies)
+    print("\n🎲 Random Movie Suggestion:")
+    print(f"🎬 {movie.title}")
+    print(f"📅 Year: {movie.year}")
+    print(f"⭐ Rating: {movie.rating}")
+    print(f"🖼️ Poster: {movie.poster_url}\n")
+
+    input("🔙 Press Enter to return to the menu...")
     present_menu()
 
 
@@ -314,7 +314,7 @@ def present_menu() -> None:
         3: command_delete_movie,
         4: command_update_movie,
         5: command_show_stats,
-        # 6: command_random_movie,
+        6: command_random_movie,
         # 7: command_search_movie,
         # 8: command_sort_movies_by_rating,
         # 9: command_sort_movies_by_year,
