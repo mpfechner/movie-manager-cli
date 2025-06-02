@@ -1,15 +1,25 @@
 from storage.movie_storage_sql import get_user_movies
 from pathlib import Path
 
+from api.omdb_api import fetch_imdb_id
+
 def generate_movie_card(movie) -> str:
     """Return HTML snippet for a single movie card."""
+    imdb_id = fetch_imdb_id(movie.title)
+    imdb_link = f"https://www.imdb.com/title/{imdb_id}" if imdb_id else "#"
+
     return f"""
     <div class="movie-card">
-        <img src="{movie.poster_url}" alt="Poster of {movie.title}">
+        <a href="{imdb_link}" target="_blank">
+            <img src="{movie.poster_url}" alt="Poster of {movie.title}">
+        </a>
         <div class="movie-title">{movie.title}</div>
         <div class="movie-year">{movie.year}</div>
     </div>
     """
+
+
+
 
 def generate_html(user_id: int,
                   template_path: str = "static/index_template.html",

@@ -7,9 +7,28 @@
 
 </head>
 <body>
+<button id="dark-mode-toggle">🌙 Toggle Dark Mode</button>
   <header>Michael's Movie App</header>
   <div class="movie-grid">
     {{MOVIE_CARDS}}
   </div>
+<script>
+    const toggleButton = document.getElementById("dark-mode-toggle");
+    const body = document.body;
+
+    // Zustand merken über localStorage
+    if (localStorage.getItem("dark-mode") === "enabled") {
+        body.classList.add("dark-mode");
+    }
+
+    toggleButton.addEventListener("click", () => {
+        body.classList.toggle("dark-mode");
+        if (body.classList.contains("dark-mode")) {
+            localStorage.setItem("dark-mode", "enabled");
+        } else {
+            localStorage.setItem("dark-mode", "disabled");
+        }
+    });
+</script>
 </body>
 </html>

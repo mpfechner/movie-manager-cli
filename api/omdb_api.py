@@ -11,7 +11,8 @@ def fetch_movie_data(title: str) -> dict | None:
             "title": title,
             "year": 2000,
             "rating": 7.0,
-            "poster_url": "https://via.placeholder.com/150"
+            "poster_url": "https://via.placeholder.com/150",
+            "imdb_id": "tt0111161"
         }
 
     url = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}&t={title}"
@@ -27,12 +28,24 @@ def fetch_movie_data(title: str) -> dict | None:
             return None
 
         return {
-            "title": data.get("Title"),
-            "year": int(data.get("Year", 0)),
-            "rating": float(data.get("imdbRating", 0.0)),
-            "poster_url": data.get("Poster")
-        }
+                "title": data.get("Title"),
+                "year": int(data.get("Year")),
+                "rating": float(data.get("imdbRating", 0.0)),
+                "poster_url": data.get("Poster"),
+                "imdb_id": data.get("imdbID")
+            }
+
 
     except requests.exceptions.RequestException as e:
         print(f"❌ Request failed: {e}")
         return None
+
+def fetch_imdb_id(title: str) -> str | None:
+    """Fetch the IMDb ID for a movie title."""
+    url = f"http://www.omdbapi.com/?apikey={OMDB_API_KEY}&t={title}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if data.get("Response") == "True":
+            return data.get("imdbID")
+    return None
