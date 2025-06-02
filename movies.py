@@ -1,31 +1,40 @@
 import statistics  # For statistics functions
 import random  # For random movie selection
 import sys
-from fuzzywuzzy import process  # For fuzzy matching in movie search
 from storage import movie_storage_sql as storage
+from api.omdb_api import fetch_movie_data
 
 
 current_user_id = None
 
 
 def choose_user() -> int:
+    """Let the user choose an existing profile or create a new one."""
     users = storage.list_users()
-    print("Select a user:")
+
+    if not users:
+        print("No users found. Let's create one!")
+        new_name = input("Enter your name: ").strip()
+        storage.add_user(new_name)
+        return storage.get_user_id(new_name)
+
+    print("\nSelect a user:")
     for idx, user in enumerate(users, start=1):
         print(f"{idx}. {user.name}")
     print(f"{len(users)+1}. Create new user")
 
-    choice = input("Enter choice: ").strip()
-    if choice.isdigit():
-        choice = int(choice)
-        if 1 <= choice <= len(users):
-            return users[choice - 1].id
-        elif choice == len(users) + 1:
-            new_name = input("Enter new user name: ").strip()
-            storage.add_user(new_name)
-            return storage.get_user_id(new_name)
-    print("❌ Invalid choice. Try again.")
-    return choose_user()
+    while True:
+        choice = input("Enter your choice: ").strip()
+        if choice.isdigit():
+            choice = int(choice)
+            if 1 <= choice <= len(users):
+                return users[choice - 1].id
+            elif choice == len(users) + 1:
+                new_name = input("Enter new user name: ").strip()
+                storage.add_user(new_name)
+                return storage.get_user_id(new_name)
+        print("❌ Invalid input, please try again.")
+
 
 
 def command_list_movies():
@@ -40,47 +49,27 @@ def command_list_movies():
         print(f"- {title} ({data['year']}), Rating: {data['rating']}")
 
 
+def command_add_movie():
+    """Add a movie using the OMDb API."""
+    title_input = input("🎬 Enter movie title: ").strip()
 
-# def list_movies() -> None:
-#     """ Function to list all movies with their ratings """
-#     movies = movie_storage.get_movies()  # Load movies from the storage file
-#     print(f"\033[34m{len(movies)} movies in total\033[0m")
-#     for title, data in movies.items():
-#         print(f"\033[34m{title}: Rating: {data['rating']} Year: {data['year']}\033[0m")
-#     print()
-#     input("\033[34mPress enter to continue\033[0m")
-#     present_menu()
+    movie_data = fetch_movie_data(title_input)
 
+    if not movie_data:
+        print("❌ Could not fetch movie data from OMDb API.")
+        return
 
-def add_movie() -> None:
-    """ Function to add a new movie with a rating """
-    while True:
-        new_movie = input("\033[34mPlease enter name of movie: \33[0m").strip()
-        if new_movie:
-            break
-        print("\033[31mMovie title cannot be empty! Please enter a valid title.\033[0m")
-
-    while True:
-        try:
-            new_year = int(input("\033[34mPlease enter the release year: \33[0m"))
-            break
-        except ValueError:
-            print("\033[31mPlease enter a valid year (numeric).")
-
-    while True:
-        try:
-            new_rating = float(input("\033[34mPlease enter rating (0-10): \33[0m"))
-            if 0 <= new_rating <= 10:
-                break
-            print(f"\033[31mRating {new_rating} is invalid. Please enter rating between 0 and 10\033[0m")
-        except ValueError:
-            print("\033[31mPlease enter a valid numeric rating.\033[0m")
-
-    movie_storage.add_movie(new_movie, new_year, round(new_rating, 2))
-    print(f"\033[34mMovie {new_movie} successfully added\033[0m")
-    print()
-    input("\033[34mPress enter to continue\033[0m")
-    present_menu()
+    try:
+        storage.add_movie(
+            title=movie_data["title"],
+            year=movie_data["year"],
+            rating=movie_data["rating"],
+            poster_url=movie_data["poster_url"],
+            user_id=current_user_id
+        )
+        print(f"✅ Movie '{movie_data['title']}' added successfully.")
+    except Exception as e:
+        print(f"❌ Error adding movie: {e}")
 
 
 def delete_movie() -> None:
@@ -290,14 +279,14 @@ def present_menu() -> None:
         0: sys.exit,
         1: command_list_movies,
         2: command_add_movie,
-        3: command_delete_movie,
-        4: command_update_movie,
-        5: command_show_stats,
-        6: command_random_movie,
-        7: command_search_movie,
-        8: command_sort_movies_by_rating,
-        9: command_sort_movies_by_year,
-        10: command_filter_movies
+        # 3: command_delete_movie,
+        # 4: command_update_movie,
+        # 5: command_show_stats,
+        # 6: command_random_movie,
+        # 7: command_search_movie,
+        # 8: command_sort_movies_by_rating,
+        # 9: command_sort_movies_by_year,
+        # 10: command_filter_movies
     }
 
     # Call the function corresponding to the user's choice
@@ -309,9 +298,13 @@ def present_menu() -> None:
 
 
 def main():
-    """ Hauptfunktion, um die Filmdatenbank zu starten """
+    global current_user_id
     print("********** My Movies Database **********")
+    current_user_id = choose_user()
     present_menu()
+    choose_user()  # ← das hier muss drin sein
+    present_menu()
+
 
 
 if __name__ == "__main__":
