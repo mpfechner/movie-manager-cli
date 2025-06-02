@@ -195,6 +195,17 @@ def get_movies_sorted_by_year(user_id: int) -> list:
         return result.fetchall()
 
 
+def filter_movies_by_rating(user_id: int, min_rating: float) -> list:
+    """Return all movies for a user with rating >= min_rating."""
+    with engine.connect() as connection:
+        result = connection.execute(
+            text("SELECT * FROM movies WHERE user_id = :user_id AND rating >= :min_rating"),
+            {"user_id": user_id, "min_rating": min_rating}
+        )
+        return result.fetchall()
+
+
+
 if __name__ == "__main__":
     uid = get_user_id("Sara")
     if uid:

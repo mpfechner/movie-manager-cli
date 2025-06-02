@@ -190,43 +190,6 @@ def command_random_movie():
     present_menu()
 
 
-def filter_movies() -> None:
-    """ Function to filter movies based on criteria """
-    try:
-        min_rating = input("\033[34mEnter minimum rating (leave blank for no filter): \033[0m")
-        min_year = input("\033[34mEnter start year (leave blank for no filter): \033[0m")
-        max_year = input("\033[34mEnter end year (leave blank for no filter): \033[0m")
-
-        min_rating = float(min_rating) if min_rating else 0
-        if min_rating < 0 or min_rating > 10:
-            print("\033[31mRating must be between 0 and 10\033[0m")
-            return
-
-        min_year = int(min_year) if min_year else 0
-        max_year = int(max_year) if max_year else 9999
-
-        if min_year > max_year:
-            print("\033[31mStart year cannot be greater than end year.\033[0m")
-            return
-
-        movies = movie_storage.get_movies()
-        filtered_movies = {title: data for title, data in movies.items() if
-            data["rating"] >= min_rating and min_year <= data["year"] <= max_year}
-
-        if filtered_movies:
-            for title, data in filtered_movies.items():
-                print(f"\033[34m{title} ({data['year']}): Rating: {data['rating']}\033[0m")
-        else:
-            print("\033[31mNo movies match the filter criteria\033[0m")
-
-    except ValueError as error:
-        print(f"\033[31mInvalid input: {error}\033[0m")
-
-    print()
-    input("\033[34mPress enter to continue\033[0m")
-    present_menu()
-
-
 def command_search_movie():
     """Search for a movie title using fuzzy matching."""
     movies = storage.get_user_movies(current_user_id)
@@ -297,6 +260,29 @@ def command_sort_movies_by_year():
     present_menu()
 
 
+def command_filter_movies():
+    """Filter user's movies by minimum rating."""
+    try:
+        min_rating = float(input("🔍 Enter minimum rating (0.0 - 10.0): ").strip())
+    except ValueError:
+        print("❌ Invalid rating input.")
+        return
+
+    movies = storage.filter_movies_by_rating(current_user_id, min_rating)
+    if not movies:
+        print("❌ No movies found with that rating or higher.")
+        return
+
+    print(f"\n🎯 Movies with rating >= {min_rating}:\n")
+    for movie in movies:
+        print(f"🎬 {movie.title} ({movie.year}) - ⭐ {movie.rating}")
+        print(f"🖼️ {movie.poster_url}\n")
+
+    input("🔙 Press Enter to return to the menu...")
+    present_menu()
+
+
+
 
 def present_menu() -> None:
     """ Main menu to navigate through the options """
@@ -328,7 +314,7 @@ def present_menu() -> None:
         7: command_search_movie,
         8: command_sort_movies_by_rating,
         9: command_sort_movies_by_year,
-        # 10: command_filter_movies
+        10: command_filter_movies
     }
 
     # Call the function corresponding to the user's choice
