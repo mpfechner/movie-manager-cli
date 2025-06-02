@@ -5,16 +5,51 @@ from fuzzywuzzy import process  # For fuzzy matching in movie search
 from storage import movie_storage_sql as storage
 
 
+current_user_id = None
 
-def list_movies() -> None:
-    """ Function to list all movies with their ratings """
-    movies = movie_storage.get_movies()  # Load movies from the storage file
-    print(f"\033[34m{len(movies)} movies in total\033[0m")
+
+def choose_user() -> int:
+    users = storage.list_users()
+    print("Select a user:")
+    for idx, user in enumerate(users, start=1):
+        print(f"{idx}. {user.name}")
+    print(f"{len(users)+1}. Create new user")
+
+    choice = input("Enter choice: ").strip()
+    if choice.isdigit():
+        choice = int(choice)
+        if 1 <= choice <= len(users):
+            return users[choice - 1].id
+        elif choice == len(users) + 1:
+            new_name = input("Enter new user name: ").strip()
+            storage.add_user(new_name)
+            return storage.get_user_id(new_name)
+    print("❌ Invalid choice. Try again.")
+    return choose_user()
+
+
+def command_list_movies():
+    """List all movies for the current user using SQL storage."""
+    movies = storage.list_movies(current_user_id)
+    if not movies:
+        print("\033[31mNo movies found in your collection.\033[0m")
+        return
+
+    print("\033[32mYour movie collection:\033[0m")
     for title, data in movies.items():
-        print(f"\033[34m{title}: Rating: {data['rating']} Year: {data['year']}\033[0m")
-    print()
-    input("\033[34mPress enter to continue\033[0m")
-    present_menu()
+        print(f"- {title} ({data['year']}), Rating: {data['rating']}")
+
+
+
+# def list_movies() -> None:
+#     """ Function to list all movies with their ratings """
+#     movies = movie_storage.get_movies()  # Load movies from the storage file
+#     print(f"\033[34m{len(movies)} movies in total\033[0m")
+#     for title, data in movies.items():
+#         print(f"\033[34m{title}: Rating: {data['rating']} Year: {data['year']}\033[0m")
+#     print()
+#     input("\033[34mPress enter to continue\033[0m")
+#     present_menu()
 
 
 def add_movie() -> None:
@@ -253,16 +288,16 @@ def present_menu() -> None:
     # Dictionary to map choices to functions
     options = {
         0: sys.exit,
-        1: list_movies,
-        2: add_movie,
-        3: delete_movie,
-        4: update_movie,
-        5: show_stats,
-        6: random_movie,
-        7: search_movie,
-        8: sort_movies_by_rating,
-        9: sort_movies_by_year,
-        10: filter_movies
+        1: command_list_movies,
+        2: command_add_movie,
+        3: command_delete_movie,
+        4: command_update_movie,
+        5: command_show_stats,
+        6: command_random_movie,
+        7: command_search_movie,
+        8: command_sort_movies_by_rating,
+        9: command_sort_movies_by_year,
+        10: command_filter_movies
     }
 
     # Call the function corresponding to the user's choice
