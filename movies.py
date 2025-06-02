@@ -1,6 +1,7 @@
 import statistics  # For statistics functions
 import random  # For random movie selection
 import sys
+from rapidfuzz import process
 from storage import movie_storage_sql as storage
 from api.omdb_api import fetch_movie_data
 
@@ -72,20 +73,27 @@ def command_add_movie():
         print(f"❌ Error adding movie: {e}")
 
 
-def delete_movie() -> None:
-    """ Function to delete a movie by its name """
-    delete_movie_name = input("\033[34mEnter movie name to delete: \33[0m").strip()
-
-    if not delete_movie_name:
-        print("\033[31mMovie name cannot be empty.\033[0m")
-        input("\033[34mPress enter to continue\033[0m")
-        present_menu()
+def command_delete_movie():
+    """Delete a movie from the current user's collection using fuzzy search."""
+    movies = storage.list_movies(current_user_id)
+    if not movies:
+        print("❌ You have no movies to delete.")
         return
 
-    movie_storage.delete_movie(delete_movie_name)
-    print()
-    input("\033[34mPress enter to continue\033[0m")
-    present_menu()
+    title_input = input("🗑️ Enter the title of the movie to delete: ").strip()
+
+    best_match, score, _ = process.extractOne(title_input, movies.keys())
+    if score < 70:
+        print("❌ No close match found.")
+        return
+
+    confirm = input(f"❓ Did you mean '{best_match}'? (y/n): ").strip().lower()
+    if confirm != "y":
+        print("❌ Deletion cancelled.")
+        return
+
+    storage.delete_movie(best_match, current_user_id)
+
 
 
 def update_movie() -> None:
@@ -279,7 +287,7 @@ def present_menu() -> None:
         0: sys.exit,
         1: command_list_movies,
         2: command_add_movie,
-        # 3: command_delete_movie,
+        3: command_delete_movie,
         # 4: command_update_movie,
         # 5: command_show_stats,
         # 6: command_random_movie,
