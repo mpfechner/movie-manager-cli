@@ -265,20 +265,19 @@ def command_search_movie():
     present_menu()
 
 
-def sort_movies_by_rating() -> None:
-    """ Function to sort movies by rating """
-    movies = movie_storage.get_movies()
-    sorted_movies = sorted(movies.items(), key=lambda x: x[1]["rating"], reverse=True)
+def command_sort_movies_by_rating():
+    """Display all movies sorted by rating (descending)."""
+    movies = storage.get_movies_sorted_by_rating(current_user_id)
+    if not movies:
+        print("❌ No movies found.")
+        return
 
-    if sorted_movies:
-        print("\033[34mMovies sorted by rating:\033[0m")
-        for title, data in sorted_movies:
-            print(f"\033[34m{title}: Rating: {data['rating']} Year: {data['year']}\033[0m")
-    else:
-        print("\033[31mNo movies in the database to sort\033[0m")
+    print("\n📈 Movies sorted by rating:\n")
+    for movie in movies:
+        print(f"🎬 {movie.title} - ⭐ {movie.rating} ({movie.year})")
+        print(f"🖼️ {movie.poster_url}\n")
 
-    print("\033[0m")
-    input("\033[34mPress enter to continue\033[0m")
+    input("🔙 Press Enter to return to the menu...")
     present_menu()
 
 
@@ -327,7 +326,7 @@ def present_menu() -> None:
         5: command_show_stats,
         6: command_random_movie,
         7: command_search_movie,
-        # 8: command_sort_movies_by_rating,
+        8: command_sort_movies_by_rating,
         # 9: command_sort_movies_by_year,
         # 10: command_filter_movies
     }
