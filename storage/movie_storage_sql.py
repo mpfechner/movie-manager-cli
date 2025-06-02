@@ -1,5 +1,6 @@
 import os
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "data", "movies.db")
@@ -140,6 +141,28 @@ def update_note(title: str, note: str, user_id: int) -> None:
             print(f"⚠️ Movie '{title}' not found for user ID {user_id}.")
 
 
+def update_movie(title: str, year: int, rating: float, poster_url: str, user_id: int) -> bool:
+    """Update an existing movie for a specific user. Returns True if update was successful."""
+    try:
+        with engine.begin() as connection:
+            result = connection.execute(
+                text("""
+                    UPDATE movies
+                    SET year = :year, rating = :rating, poster_url = :poster_url
+                    WHERE title = :title AND user_id = :user_id
+                """),
+                {
+                    "year": year,
+                    "rating": rating,
+                    "poster_url": poster_url,
+                    "title": title,
+                    "user_id": user_id
+                }
+            )
+            return result.rowcount > 0
+    except SQLAlchemyError as e:
+        print(f"❌ Database error during update: {e}")
+        return False
 
 
 if __name__ == "__main__":

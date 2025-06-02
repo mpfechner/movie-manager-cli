@@ -95,32 +95,57 @@ def command_delete_movie():
     storage.delete_movie(best_match, current_user_id)
 
 
-
-def update_movie() -> None:
-    """ Function to update the rating of a movie """
-    update_movie_name = input("\033[34mEnter movie name to update: \033[0m").strip()
-
-    movies = movie_storage.get_movies()
-
-    if not update_movie_name:
-        print("\033[31mMovie name cannot be empty.\033[0m")
-        input("\033[34mPress enter to continue\033[0m")
-        present_menu()
+1
+def command_update_movie():
+    """Update rating, year, or poster of a movie for the current user."""
+    movies = storage.list_movies(current_user_id)
+    if not movies:
+        print("❌ No movies to update.")
         return
 
-    if update_movie_name not in movies:
-        print(f"\033[31mMovie {update_movie_name} not in database and could not be updated!\033[0m")
+    title_input = input("✏️ Enter the title of the movie to update: ").strip()
+    match = process.extractOne(title_input, movies.keys())
+    if not match:
+        print("❌ No close match found.")
+        return
+
+    best_match, score, _ = match
+    if score < 70:
+        print("❌ No close match found.")
+        return
+
+    confirm = input(f"❓ Did you mean '{best_match}'? (y/n): ").strip().lower()
+    if confirm != "y":
+        print("❌ Update cancelled.")
+        return
+
+    current_data = movies[best_match]
+    print(f"Current year: {current_data['year']}")
+    print(f"Current rating: {current_data['rating']}")
+    print(f"Current poster: {current_data['poster_url']}")
+
+    new_year = input("New year (leave empty to keep current): ").strip()
+    new_rating = input("New rating (0.0–10.0, leave empty to keep current): ").strip()
+    new_poster = input("New poster URL (leave empty to keep current): ").strip()
+
+    year = int(new_year) if new_year else current_data['year']
+    rating = float(new_rating) if new_rating else current_data['rating']
+    poster_url = new_poster if new_poster else current_data['poster_url']
+
+    success = storage.update_movie(
+        title=best_match,
+        year=year,
+        rating=rating,
+        poster_url=poster_url,
+        user_id=current_user_id
+    )
+
+    if success:
+        print("✅ Movie updated successfully.\n")
     else:
-        updated_rating = float(input("\033[34mPlease enter new movie rating (0-10): \033[0m"))
+        print("❌ Update failed – movie not found or an error occurred.\n")
 
-        while not 0 <= updated_rating <= 10:
-            print(f"\033[31mRating {updated_rating} is invalid. Please enter rating between 0 and 10\033[0m")
-            updated_rating = float(input("\033[34mPlease enter new movie rating (0-10): \033[0m"))
-
-        movie_storage.update_movie(update_movie_name, round(updated_rating, 2))
-
-    print()
-    input("\033[34mPress enter to continue\033[0m")
+    input("🔙 Press Enter to return to the menu...")
     present_menu()
 
 
@@ -288,7 +313,7 @@ def present_menu() -> None:
         1: command_list_movies,
         2: command_add_movie,
         3: command_delete_movie,
-        # 4: command_update_movie,
+        4: command_update_movie,
         # 5: command_show_stats,
         # 6: command_random_movie,
         # 7: command_search_movie,
