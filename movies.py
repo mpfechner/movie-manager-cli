@@ -4,6 +4,7 @@ import sys
 from rapidfuzz import process
 from storage import movie_storage_sql as storage
 from api.omdb_api import fetch_movie_data
+from html_generator import generate_html
 
 
 current_user_id = None
@@ -282,6 +283,13 @@ def command_filter_movies():
     present_menu()
 
 
+def command_export_to_html() -> None:
+    """Export the current user's movies as an HTML page."""
+    try:
+        generate_html(current_user_id)
+        print("✅ Export successful. Open 'movies_output.html' to view your movie collection.")
+    except Exception as e:
+        print(f"❌ Export failed: {e}")
 
 
 def present_menu() -> None:
@@ -298,6 +306,7 @@ def present_menu() -> None:
     print("8. Movies sorted by rating")
     print("9. Movies sorted by year")
     print("10. Filter movies")
+    print("11. Export movies as HTML")
     print("\033[0m")
 
     choice = int(input("\033[34mEnter choice (0-10): \033[0m"))
@@ -314,7 +323,8 @@ def present_menu() -> None:
         7: command_search_movie,
         8: command_sort_movies_by_rating,
         9: command_sort_movies_by_year,
-        10: command_filter_movies
+        10: command_filter_movies,
+        11: command_export_to_html
     }
 
     # Call the function corresponding to the user's choice
@@ -330,7 +340,7 @@ def main():
     print("********** My Movies Database **********")
     current_user_id = choose_user()
     present_menu()
-    choose_user()  # ← das hier muss drin sein
+    choose_user()
     present_menu()
 
 
