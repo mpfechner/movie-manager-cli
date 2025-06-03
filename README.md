@@ -56,6 +56,16 @@ This application is a command-line based movie management tool that supports the
 
 ---
 
+### Sample Database
+
+To make testing easier for reviewers and instructors, this project includes a pre-filled SQLite database: `movies.db`.
+
+You can use it right away without adding movies manually. All core features (listing, searching, updating, exporting, etc.) can be tested immediately.
+
+If you prefer to start with an empty database, simply delete the `movies.db` file.
+
+---
+
 ### Known Issues
 
 * Poster URLs may occasionally return broken images due to API inconsistencies

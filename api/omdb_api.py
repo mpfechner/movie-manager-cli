@@ -1,7 +1,7 @@
 import requests
 from typing import Optional
 
-OMDB_API_KEY = "f821c8bd"
+OMDB_API_KEY = "YOUR API KEY HERE"
 TEST_MODE = False  # Toggle this to True for development fallback
 
 
