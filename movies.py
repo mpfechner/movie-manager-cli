@@ -1,14 +1,17 @@
-import statistics  # For statistics functions
-import random  # For random movie selection
+import random
 import sys
+from typing import Optional
 from rapidfuzz import process
-from storage import movie_storage_sql as storage
 from api.omdb_api import fetch_movie_data
 from html_generator import generate_html
+from storage import movie_storage_sql as storage
 
+current_user_id: Optional[int] = None
 
-current_user_id = None
-
+def return_to_menu() -> None:
+    """Return to the main menu after user input."""
+    input("🔙 Press Enter to return to the menu...")
+    present_menu()
 
 def choose_user() -> int:
     """Let the user choose an existing profile or create a new one."""
@@ -23,7 +26,7 @@ def choose_user() -> int:
     print("\nSelect a user:")
     for idx, user in enumerate(users, start=1):
         print(f"{idx}. {user.name}")
-    print(f"{len(users)+1}. Create new user")
+    print(f"{len(users) + 1}. Create new user")
 
     while True:
         choice = input("Enter your choice: ").strip()
@@ -37,10 +40,8 @@ def choose_user() -> int:
                 return storage.get_user_id(new_name)
         print("❌ Invalid input, please try again.")
 
-
-
-def command_list_movies():
-    """List all movies for the current user using SQL storage."""
+def command_list_movies() -> None:
+    """List all movies in the current user's collection."""
     movies = storage.list_movies(current_user_id)
     if not movies:
         print("\033[31mNo movies found in your collection.\033[0m")
@@ -50,11 +51,11 @@ def command_list_movies():
     for title, data in movies.items():
         print(f"- {title} ({data['year']}), Rating: {data['rating']}")
 
+    return_to_menu()
 
-def command_add_movie():
-    """Add a movie using the OMDb API."""
+def command_add_movie() -> None:
+    """Add a new movie to the user's collection using the OMDb API."""
     title_input = input("🎬 Enter movie title: ").strip()
-
     movie_data = fetch_movie_data(title_input)
 
     if not movie_data:
@@ -73,52 +74,53 @@ def command_add_movie():
     except Exception as e:
         print(f"❌ Error adding movie: {e}")
 
+    return_to_menu()
 
-def command_delete_movie():
-    """Delete a movie from the current user's collection using fuzzy search."""
+def command_delete_movie() -> None:
+    """Delete a movie from the user's collection using fuzzy matching."""
     movies = storage.list_movies(current_user_id)
     if not movies:
         print("❌ You have no movies to delete.")
         return
 
     title_input = input("🗑️ Enter the title of the movie to delete: ").strip()
-
     best_match, score, _ = process.extractOne(title_input, movies.keys())
+
     if score < 70:
         print("❌ No close match found.")
-        return
+        return_to_menu()
 
     confirm = input(f"❓ Did you mean '{best_match}'? (y/n): ").strip().lower()
     if confirm != "y":
         print("❌ Deletion cancelled.")
-        return
+        return_to_menu()
 
     storage.delete_movie(best_match, current_user_id)
+    return_to_menu()
 
-
-
-def command_update_movie():
-    """Update rating, year, or poster of a movie for the current user."""
+def command_update_movie() -> None:
+    """Update a movie's information (year, rating, or poster URL)."""
     movies = storage.list_movies(current_user_id)
     if not movies:
         print("❌ No movies to update.")
-        return
+        return_to_menu()
 
     title_input = input("✏️ Enter the title of the movie to update: ").strip()
     match = process.extractOne(title_input, movies.keys())
+
     if not match:
         print("❌ No close match found.")
-        return
+        return_to_menu()
 
     best_match, score, _ = match
     if score < 70:
         print("❌ No close match found.")
-        return
+        return_to_menu()
 
     confirm = input(f"❓ Did you mean '{best_match}'? (y/n): ").strip().lower()
     if confirm != "y":
         print("❌ Update cancelled.")
-        return
+        return_to_menu()
 
     current_data = movies[best_match]
     print(f"Current year: {current_data['year']}")
@@ -146,12 +148,10 @@ def command_update_movie():
     else:
         print("❌ Update failed – movie not found or an error occurred.\n")
 
-    input("🔙 Press Enter to return to the menu...")
-    present_menu()
+    return_to_menu()
 
-
-def command_show_stats():
-    """Show statistics about the user's movie collection."""
+def command_show_stats() -> None:
+    """Display statistics for the user's movie collection."""
     movies = storage.get_user_movies(current_user_id)
     if not movies:
         print("❌ No movies found.")
@@ -168,13 +168,10 @@ def command_show_stats():
     print(f"🏆 Best movie: {best.title} ({best.rating})")
     print(f"🐌 Worst movie: {worst.title} ({worst.rating})\n")
 
-    input("🔙 Press Enter to return to the menu...")
-    present_menu()
+    return_to_menu()
 
-
-
-def command_random_movie():
-    """Display a random movie from the user's collection."""
+def command_random_movie() -> None:
+    """Display a randomly selected movie from the user's collection."""
     movies = storage.get_user_movies(current_user_id)
     if not movies:
         print("❌ No movies found.")
@@ -187,50 +184,38 @@ def command_random_movie():
     print(f"⭐ Rating: {movie.rating}")
     print(f"🖼️ Poster: {movie.poster_url}\n")
 
-    input("🔙 Press Enter to return to the menu...")
-    present_menu()
+    return_to_menu()
 
-
-def command_search_movie():
-    """Search for a movie title using fuzzy matching."""
+def command_search_movie() -> None:
+    """Search for a movie in the collection using fuzzy matching."""
     movies = storage.get_user_movies(current_user_id)
     if not movies:
         print("❌ No movies found.")
-        return
+        return_to_menu()
 
     query = input("🔍 Enter part of a movie title to search: ").strip()
     if not query:
         print("⚠️ Search query cannot be empty.")
-        return
+        return_to_menu()
 
     movie_titles = [m.title for m in movies]
     matches = process.extract(query, movie_titles, limit=5, score_cutoff=60)
 
     if not matches:
         print("❌ No matching titles found.")
-        return
-
-    found_any = False
+        return_to_menu()
 
     print("\n🔎 Search results:")
     for title, score, _ in matches:
         movie = next((m for m in movies if m.title == title), None)
-        if not movie:
-            continue  # Failsafe fallback
+        if movie:
+            print(f"🎬 {movie.title} ({movie.year}) - Rating: {movie.rating}")
+            print(f"🖼️ {movie.poster_url}\n")
 
-        print(f"🎬 {movie.title} ({movie.year}) - Rating: {movie.rating}")
-        print(f"🖼️ {movie.poster_url}\n")
-        found_any = True
+    return_to_menu()
 
-    if not found_any:
-        print("❌ No valid movie details found for the matches.")
-
-    input("🔙 Press Enter to return to the menu...")
-    present_menu()
-
-
-def command_sort_movies_by_rating():
-    """Display all movies sorted by rating (descending)."""
+def command_sort_movies_by_rating() -> None:
+    """Display all movies sorted by rating in descending order."""
     movies = storage.get_movies_sorted_by_rating(current_user_id)
     if not movies:
         print("❌ No movies found.")
@@ -241,59 +226,54 @@ def command_sort_movies_by_rating():
         print(f"🎬 {movie.title} - ⭐ {movie.rating} ({movie.year})")
         print(f"🖼️ {movie.poster_url}\n")
 
-    input("🔙 Press Enter to return to the menu...")
-    present_menu()
+    return_to_menu()
 
-
-def command_sort_movies_by_year():
-    """Display all movies sorted by release year (ascending)."""
+def command_sort_movies_by_year() -> None:
+    """Display all movies sorted by release year in ascending order."""
     movies = storage.get_movies_sorted_by_year(current_user_id)
     if not movies:
         print("❌ No movies found.")
-        return
+        return_to_menu()
 
     print("\n📆 Movies sorted by year:\n")
     for movie in movies:
         print(f"🎬 {movie.title} ({movie.year}) - ⭐ {movie.rating}")
         print(f"🖼️ {movie.poster_url}\n")
 
-    input("🔙 Press Enter to return to the menu...")
-    present_menu()
+    return_to_menu()
 
-
-def command_filter_movies():
-    """Filter user's movies by minimum rating."""
+def command_filter_movies() -> None:
+    """Filter and display movies that meet a minimum rating threshold."""
     try:
         min_rating = float(input("🔍 Enter minimum rating (0.0 - 10.0): ").strip())
     except ValueError:
         print("❌ Invalid rating input.")
-        return
+        return_to_menu()
 
     movies = storage.filter_movies_by_rating(current_user_id, min_rating)
     if not movies:
         print("❌ No movies found with that rating or higher.")
-        return
+        return_to_menu()
 
     print(f"\n🎯 Movies with rating >= {min_rating}:\n")
     for movie in movies:
         print(f"🎬 {movie.title} ({movie.year}) - ⭐ {movie.rating}")
         print(f"🖼️ {movie.poster_url}\n")
 
-    input("🔙 Press Enter to return to the menu...")
-    present_menu()
-
+    return_to_menu()
 
 def command_export_to_html() -> None:
-    """Export the current user's movies as an HTML page."""
+    """Export the movie collection to an HTML file."""
     try:
         generate_html(current_user_id)
         print("✅ Export successful. Open 'movies_output.html' to view your movie collection.")
     except Exception as e:
         print(f"❌ Export failed: {e}")
 
+    return_to_menu()
 
 def present_menu() -> None:
-    """ Main menu to navigate through the options """
+    """Display the main menu and handle user selection."""
     print("\033[33mMenu:")
     print("0. Exit")
     print("1. List movies")
@@ -309,9 +289,12 @@ def present_menu() -> None:
     print("11. Export movies as HTML")
     print("\033[0m")
 
-    choice = int(input("\033[34mEnter choice (0-10): \033[0m"))
+    try:
+        choice = int(input("\033[34mEnter choice (0-11): \033[0m"))
+    except ValueError:
+        print("❌ Invalid input. Please enter a number.")
+        return present_menu()
 
-    # Dictionary to map choices to functions
     options = {
         0: sys.exit,
         1: command_list_movies,
@@ -327,23 +310,18 @@ def present_menu() -> None:
         11: command_export_to_html
     }
 
-    # Call the function corresponding to the user's choice
     if choice in options:
         options[choice]()
     else:
         print("\033[31mInput not valid, please try again\033[0m")
         present_menu()
 
-
-def main():
+def main() -> None:
+    """Initialize the application and launch the main menu."""
     global current_user_id
     print("********** My Movies Database **********")
     current_user_id = choose_user()
     present_menu()
-    choose_user()
-    present_menu()
-
-
 
 if __name__ == "__main__":
     main()
