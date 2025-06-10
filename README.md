@@ -1,20 +1,10 @@
-### Notes on API Usage
-
-This project uses the free OMDb API to fetch movie data (title, year, rating, poster).
-
-Due to frequent unreliability and rate limiting of the free API tier, the app includes a fallback mode for development and testing. When enabled, it provides dummy movie data to ensure the app remains usable even without API access.
-
-Set `TEST_MODE = True` in `omdb_api.py` to activate the fallback mode.
-
----
-
 ### Features
 
 This application is a command-line based movie management tool that supports the following features:
 
 * 👤 Multiple user profiles
 * ➕ Add movies with data from the OMDb API
-* 📝 Update existing movie details
+* 🗒️ Update existing movie details
 * 🗑️ Delete movies
 * 📃 List all movies for a user
 * 🔍 Search and filter movies
@@ -29,6 +19,7 @@ This application is a command-line based movie management tool that supports the
 * `movies.py`: Main CLI application
 * `storage.py`: Database interaction logic
 * `api/omdb_api.py`: OMDb API handler (with fallback mode)
+* `.env`: Environment file containing OMDb API key and test mode flag
 * `static/index_template.html`: HTML export template
 * `static/style.css`: CSS styling for exported HTML
 
@@ -42,17 +33,30 @@ This application is a command-line based movie management tool that supports the
    pip install -r requirements.txt
    ```
 
-2. Set your OMDb API key in `omdb_api.py`
+2. Create a `.env` file in the project root with the following content:
 
-   ```python
-   API_KEY = "your_key_here"
    ```
+   OMDB_API_KEY=your_key_here
+   TEST_MODE=False
+   ```
+
+   > ⚠️ **Note:** For Codio submission, a `.env` file is already included. In a real-world project, this file should be excluded from version control using `.gitignore` to protect sensitive data.
 
 3. Run the main program:
 
    ```bash
    python movies.py
    ```
+
+---
+
+### Notes on API Usage
+
+This project uses the free OMDb API to fetch movie data (title, year, rating, poster).
+
+Due to frequent unreliability and rate limiting of the free API tier, the app includes a fallback mode for development and testing. When enabled, it provides dummy movie data to ensure the app remains usable even without API access.
+
+Set `TEST_MODE=True` in the `.env` file to activate the fallback mode.
 
 ---
 
