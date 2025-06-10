@@ -1,8 +1,12 @@
 import requests
 from typing import Optional
+import os
+from dotenv import load_dotenv
 
-OMDB_API_KEY = "f821c8bd"
-TEST_MODE = False  # Toggle this to True for development fallback
+load_dotenv()
+
+OMDB_API_KEY = os.getenv("OMDB_API_KEY")
+TEST_MODE = os.getenv("TEST_MODE", "False").lower() == "true"  # Toggle this to True for development fallback
 
 
 def fetch_movie_data(title: str) -> Optional[dict]:
